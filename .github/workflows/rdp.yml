@@ -23,6 +23,7 @@ jobs:
 
     - name: Keep Alive Session
       run: |
-        $cmd = "while (`$true) { Start-Sleep -Seconds 300 }"
-        Start-Process powershell.exe -ArgumentList "-NoProfile -Command $cmd" -WindowStyle Hidden
-        cmd /c "timeout /t 21600 /nobreak"
+        for ($i=0; $i -lt 360; $i++) {
+            Start-Sleep -Seconds 60
+            Write-Output "Runner is active: $i minutes"
+        }
