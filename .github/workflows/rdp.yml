@@ -6,17 +6,18 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
+    - name: Download & Install Tailscale
+      run: |
+        Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
+        Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/silent" -Wait
     - name: Connect to Tailscale
-      uses: tailscale/github-action@v2
-      with:
-        authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-
+      run: |
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTHKEY }}
     - name: Enable RDP & Set Password
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         net user runneradmin P@ssword1234
-
     - name: Keep Alive
       run: |
         while ($true) { Start-Sleep -Seconds 60 }
