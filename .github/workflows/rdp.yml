@@ -20,4 +20,4 @@ jobs:
         net user runneradmin P@ssword1234
     - name: Keep Alive
       run: |
-        while ($true) { Start-Sleep -Seconds 60 }
+        ping -t 127.0.0.1
