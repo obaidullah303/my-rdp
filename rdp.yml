@@ -1,4 +1,4 @@
-name: Windows RDP
+name: Windows RDP via Tailscale
 
 on: workflow_dispatch
 
@@ -6,17 +6,31 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - name: Download & Setup Ngrok
+    - name: Download & Install Tailscale
       run: |
-        Invoke-WebRequest https://bin.equinox.io/c/b3M4120/ngrok-v3-stable-windows-amd64.zip -OutFile ngrok.zip
-        Expand-Archive ngrok.zip
-    - name: Authenticate Ngrok
+        Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
+        Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/silent" -Wait
+
+    - name: Connect to Tailscale
       run: |
-        .\ngrok\ngrok.exe authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-    - name: Enable RDP
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTHKEY }}
+
+    - name: Super-Speed Performance & Enable RDP
       run: |
+        # Enable RDP & Network Firewall
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-    - name: Create RDP Tunnel
+        net user runneradmin P@ssword1234
+        
+        # Disable Visual Effects & Animations (Fixes Lag)
+        Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects' -Name "VisualFXSetting" -Value 2
+        
+        # Compress RDP Traffic for Fast Mobile Connection
+        New-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "CompressionLevel" -PropertyType DWORD -Value 2 -Force
+
+    - name: Keep Alive Session
       run: |
-        .\ngrok\ngrok.exe tcp 3389
+        for ($i=0; $i -lt 360; $i++) {
+            Start-Sleep -Seconds 60
+            Write-Output "Runner is active: $i minutes"
+        }
